@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.hello;
+package pers.mingshan.netty.example.time;
 
 import java.net.InetSocketAddress;
 
@@ -10,13 +10,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 
-public class HelloWorldServer {
+public class TimeServer {
     private int port;  
 
-    public HelloWorldServer(int port) {  
+    public TimeServer(int port) {  
         this.port = port;  
     }  
 
@@ -36,10 +34,7 @@ public class HelloWorldServer {
             .childHandler(new ChannelInitializer<SocketChannel>() {
 
                 protected void initChannel(SocketChannel ch) throws Exception {
-//                                ch.pipeline().addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));  
-                    ch.pipeline().addLast("decoder", new StringDecoder());
-                    ch.pipeline().addLast("encoder", new StringEncoder());
-                    ch.pipeline().addLast(new HelloWorldServerHandler());
+                    ch.pipeline().addLast(new TimeServerHandler());
                 };  
             })
             .option(ChannelOption.SO_BACKLOG, 128) //提供给NioServerSocketChannel 用来接收进来的连接。
@@ -62,6 +57,7 @@ public class HelloWorldServer {
         } else {
             port = 8080; 
         }
-        new HelloWorldServer(port).start();
+        new TimeServer(port).start();
     }
 }
+
