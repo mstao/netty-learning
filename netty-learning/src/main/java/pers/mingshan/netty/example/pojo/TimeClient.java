@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.time;
+package pers.mingshan.netty.example.pojo;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
