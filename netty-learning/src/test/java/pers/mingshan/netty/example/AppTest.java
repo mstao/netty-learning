@@ -1,4 +1,4 @@
-package pers.mingshan.netty.netty_learning;
+package pers.mingshan.netty.example;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
