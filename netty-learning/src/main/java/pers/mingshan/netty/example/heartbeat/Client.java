@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.heart;
+package pers.mingshan.netty.example.heartbeat;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ public class Client {
     static final String HOST = System.getProperty("host", "127.0.0.1");  
     static final int PORT = Integer.parseInt(System.getProperty("port", "8080"));  
 
-    public void conn() throws InterruptedException {
+    public void connect() throws InterruptedException {
         // Configure the client.  
         EventLoopGroup group = new NioEventLoopGroup();  
         ChannelFuture future = null;
@@ -61,13 +61,13 @@ public class Client {
             }
 
             System.out.println("客户端开始重新连接-");
-            conn();
+            connect();
             System.out.println("客户端重新连接成功 ！");
             
         }
     }
 
     public static void main(String[] args) throws Exception {  
-        new Client().conn();
+        new Client().connect();
     }
 }

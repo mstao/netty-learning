@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.heart;
+package pers.mingshan.netty.example.heartbeat;
 
 import java.util.Date;
 
@@ -11,7 +11,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 
-public class ClientHandler extends ChannelInboundHandlerAdapter{
+public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     private static final ByteBuf HEARTBEAT_SEQUENCE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Heartbeat",  
              CharsetUtil.UTF_8));
@@ -23,15 +23,15 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("激活时间是："+new Date());  
-        System.out.println("HeartBeatClientHandler channelActive");  
-        ctx.fireChannelActive();  
+        System.out.println("HeartBeatClientHandler channelActive");
+        // 调用下一个ChannelInboundHandler的channelActive方法
+        ctx.fireChannelActive();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("停止时间是："+new Date());  
         System.out.println("HeartBeatClientHandler channelActive");  
-        ctx.fireChannelActive();  
     }
 
     @Override
@@ -46,6 +46,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
                     ctx.channel().writeAndFlush(HEARTBEAT_SEQUENCE.duplicate());  
                 } 
             }
+        } else {
+            super.userEventTriggered(ctx, evt);
         }
     }
 

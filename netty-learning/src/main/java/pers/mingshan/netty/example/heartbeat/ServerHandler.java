@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.heart;
+package pers.mingshan.netty.example.heartbeat;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

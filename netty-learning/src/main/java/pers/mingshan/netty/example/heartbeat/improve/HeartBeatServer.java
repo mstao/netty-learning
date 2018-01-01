@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.heart;
+package pers.mingshan.netty.example.heartbeat.improve;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
@@ -15,16 +15,10 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 
-/**
- * Netty 心跳检测，重连机制
- * 
- * @author mingshan
- *
- */
-public class Server {
+public class HeartBeatServer {
     private int port;
 
-    public Server(int port) {
+    public HeartBeatServer(int port) {
         this.port = port;
     }
 
@@ -48,7 +42,7 @@ public class Server {
                     ch.pipeline().addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS));
                     ch.pipeline().addLast("decoder", new StringDecoder());
                     ch.pipeline().addLast("encoder", new StringEncoder());
-                    ch.pipeline().addLast(new ServerHandler());
+                    ch.pipeline().addLast(new HeartBeatServerHandler());
                 };  
             })
             .option(ChannelOption.SO_BACKLOG, 1024) // 设置TCP缓冲区
@@ -71,6 +65,6 @@ public class Server {
         } else {
             port = 8080; 
         }
-        new Server(port).start();
+        new HeartBeatServer(port).start();
     }
 }
