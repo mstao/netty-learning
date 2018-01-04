@@ -9,6 +9,12 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.CharsetUtil;
 
+/**
+ * 客户端心跳触发器
+ * 
+ * @author mingshan
+ *
+ */
 @Sharable
 public class ConnectorIdleStateTrigger extends ChannelInboundHandlerAdapter {
 

@@ -1,4 +1,4 @@
-package pers.mingshan.netty.example.heartbeat.improve;
+package pers.mingshan.netty.production;
 
 import io.netty.channel.ChannelHandler;
 
@@ -8,7 +8,7 @@ import io.netty.channel.ChannelHandler;
  * @author mingshan
  *
  */
-public interface ChannelHanlderHolder {
+public interface ChannelHandlerHolder {
 
     ChannelHandler[] handers();
 }
