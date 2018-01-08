@@ -112,4 +112,12 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
             }
         });
     }
+
+    /**
+     * 设置是否重连，默认为true
+     * @param reconnect
+     */
+    public void setReconnect(boolean reconnect) {
+       this.reconnect = reconnect;
+    }
 }

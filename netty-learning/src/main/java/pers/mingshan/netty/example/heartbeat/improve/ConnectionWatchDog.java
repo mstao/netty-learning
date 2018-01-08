@@ -16,6 +16,7 @@ import io.netty.util.TimerTask;
 
 /**
  * 用来监测 客户端 连接服务端的状态，断开连接后进行重连
+ * 对每个channel使用一个Timer或者对每个channel开启一个定时任务，定时检查该channel是否超时
  * 
  * @author mingshan
  *

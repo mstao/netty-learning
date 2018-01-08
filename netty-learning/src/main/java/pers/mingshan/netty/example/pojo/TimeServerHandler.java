@@ -21,6 +21,8 @@ public class TimeServerHandler extends ChannelInboundHandlerAdapter {
             }
 
         });
+
+        //f.addListener(ChannelFutureListener.CLOSE);
     }
 
     @Override
