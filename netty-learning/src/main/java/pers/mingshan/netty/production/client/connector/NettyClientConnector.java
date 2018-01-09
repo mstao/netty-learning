@@ -20,7 +20,7 @@ public abstract class NettyClientConnector implements ClientConnector {
     protected volatile ByteBufAllocator allocator;
 
     public NettyClientConnector() {
-        this(AVAILABLE_PROCESSORS >> 1);
+        this(AVAILABLE_PROCESSORS << 1);
     }
 
     public NettyClientConnector(int nWorker) {

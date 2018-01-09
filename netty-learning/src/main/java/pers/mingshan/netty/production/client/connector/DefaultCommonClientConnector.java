@@ -200,7 +200,7 @@ public class DefaultCommonClientConnector extends NettyClientConnector {
     }
 
     /**
-     * 启动ack超时扫描
+     * 启动ack超时扫描（守护线程）
      */
     {
         Thread t = new Thread(new AckTimeoutScanner(), "ack.scanner");
