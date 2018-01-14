@@ -9,6 +9,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
@@ -23,6 +24,7 @@ import pers.mingshan.netty.example.heartbeat.improve.ChannelHanlderHolder;
  * @author mingshan
  *
  */
+@Sharable
 public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter implements TimerTask, ChannelHanlderHolder {
     protected static final Logger logger = LoggerFactory.getLogger(ConnectionWatchDog.class);
     // 辅助启动类

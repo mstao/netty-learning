@@ -1,7 +1,15 @@
 package pers.mingshan.netty.production.client.connector;
 
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.SERVICE_1;
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.SERVICE_2;
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.SERVICE_3;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.ACK;
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.MAGIC;
+import static pers.mingshan.netty.production.common.NettyCommonProtocol.RESPONSE;
+import static pers.mingshan.netty.production.serializer.SerializerHolder.serializerImpl;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadFactory;
@@ -12,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -26,6 +35,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -33,6 +44,7 @@ import pers.mingshan.netty.production.ConnectionWatchDog;
 import pers.mingshan.netty.production.common.Acknowledge;
 import pers.mingshan.netty.production.common.Message;
 import pers.mingshan.netty.production.common.NativeSupport;
+import pers.mingshan.netty.production.common.NettyCommonProtocol;
 import pers.mingshan.netty.production.common.exception.ConnectFailedException;
 import pers.mingshan.netty.production.srv.acceptor.AcknowledgeEncoder;
 
@@ -89,6 +101,7 @@ public class DefaultCommonClientConnector extends NettyClientConnector {
             @Override
             public ChannelHandler[] handers() {
                 return new ChannelHandler[] {
+                        // 将自己[ConnectionWatchdog]装载到handler链中，当链路断掉之后，会触发ConnectionWatchdog #channelInActive方法
                         this,
                         // 每隔30s的时间触发一次userEventTriggered的方法，并且指定IdleState是WRITER_IDLE
                         new IdleStateHandler(0, 30, 0, TimeUnit.SECONDS),
@@ -125,6 +138,12 @@ public class DefaultCommonClientConnector extends NettyClientConnector {
         return channel;
     }
 
+    /**
+     * 处理ACK消息
+     * 
+     * @author mingshan
+     *
+     */
     @Sharable
     class MessageHandler extends ChannelInboundHandlerAdapter {
 
@@ -210,5 +229,122 @@ public class DefaultCommonClientConnector extends NettyClientConnector {
 
     public void addNeedAckMessageInfo(MessageNonAck msgNonAck) {
         messageNonAcks.put(msgNonAck.id, msgNonAck);
+    }
+
+    /**
+     * **************************************************************************************************
+     *                                          Protocol
+     *  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+     *       2   │   1   │    1   │     8     │      4      │
+     *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤
+     *           │       │        │           │             │
+     *  │  MAGIC   Sign    Status   Invoke Id   Body Length                   Body Content              │
+     *           │       │        │           │             │
+     *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+     *
+     * 消息头16个字节定长
+     * = 2 // MAGIC = (short) 0xbabe
+     * + 1 // 消息标志位, 用来表示消息类型
+     * + 1 // 空
+     * + 8 // 消息 id long 类型
+     * + 4 // 消息体body长度, int类型
+     */
+    @Sharable
+    static class MessageEncoder extends MessageToByteEncoder<Message> {
+
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
+            byte[] bytes = serializerImpl().writeObject(msg);
+
+            out.writeShort(MAGIC)
+                .writeByte(msg.getSign())
+                .writeByte(0)
+                .writeLong(0)
+                .writeInt(bytes.length)
+                .writeBytes(bytes);
+        }
+
+    }
+
+    /**
+     * 消息解码, 因为每一个ByteToMessageDecoder都有针对某个socket的累积对象，
+     * 故是一个不可以共享的对象类型
+     * 
+     * @author mingshan
+     *
+     */
+    static class MessageDecoder extends ReplayingDecoder<MessageDecoder.State> {
+        private NettyCommonProtocol header = new NettyCommonProtocol();
+
+        /**
+         * 构造函数初始化state
+         */
+        public MessageDecoder() {
+            super(State.HEADER_MAGIC);
+        }
+
+        @Override
+        protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+            switch(state()) {
+                case HEADER_MAGIC : 
+                    checkMagic(in.readShort());
+                    checkpoint(State.HEADER_SIGN);
+                case HEADER_SIGN :
+                    header.setSign(in.readByte());
+                    checkpoint(State.HEADER_STATUS);
+                case HEADER_STATUS :
+                    header.setStatus(in.readByte());
+                    checkpoint(State.HEADER_ID);
+                case HEADER_ID:
+                    header.setId(in.readLong());
+                    checkpoint(State.HEADER_BODY_LENGTH);
+                case HEADER_BODY_LENGTH:
+                    header.setBodyLength(in.readInt());
+                    checkpoint(State.BODY);
+                case BODY : 
+                    switch(header.getSign()) {
+                        case RESPONSE:
+                        case SERVICE_1:
+                        case SERVICE_2:
+                        case SERVICE_3: {
+                            // 将body内容存到byte数组中
+                            byte[] body = new byte[header.getBodyLength()];
+                            in.readBytes(body);
+                            // 反序列化
+                            Message message = serializerImpl().readObject(body, Message.class);
+                            message.setSign(header.getSign());
+                            out.add(message);
+                            break;
+                        }
+                        case ACK: {
+                            // 将body内容存到byte数组中
+                            byte[] body = new byte[header.getBodyLength()];
+                            in.readBytes(body);
+                            // 反序列化
+                            Acknowledge ack = serializerImpl().readObject(body, Acknowledge.class);
+                            out.add(ack);
+                            break;
+                        }
+                        default:
+                            throw new IllegalArgumentException();
+                    }
+                    checkpoint(State.HEADER_MAGIC);
+            }
+        }
+
+        private void checkMagic(short magic) {
+            if (magic != MAGIC) {
+                throw new IllegalArgumentException("Invaid magic!");
+            }
+        }
+
+        enum State {
+            HEADER_MAGIC,
+            HEADER_SIGN,
+            HEADER_STATUS,
+            HEADER_ID,
+            HEADER_BODY_LENGTH,
+            BODY
+        }
     }
 }

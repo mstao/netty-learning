@@ -72,6 +72,10 @@ public abstract class NettySrvAcceptor implements SrvAcceptor {
         }
     }
 
+    protected ServerBootstrap bootstrap() {
+        return bootstrap;
+    }
+
     @Override
     public SocketAddress localAddress() {
         return localAddress;
@@ -84,7 +88,7 @@ public abstract class NettySrvAcceptor implements SrvAcceptor {
         worker.shutdownGracefully();
     }
 
-    protected abstract EventLoopGroup initEventLoopGroup(int nWorkers, DefaultThreadFactory workerFactory);
+    protected abstract EventLoopGroup initEventLoopGroup(int nThreads, DefaultThreadFactory threadFactory);
 
     protected abstract ChannelFuture bind(SocketAddress localAddress);
 }

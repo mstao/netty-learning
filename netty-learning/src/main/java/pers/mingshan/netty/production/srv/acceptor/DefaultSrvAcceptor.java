@@ -24,12 +24,12 @@ public abstract class DefaultSrvAcceptor extends NettySrvAcceptor {
     }
 
     class NettyEventExecuter extends ServiceThread {
-        private static final int MAX_SIZE = 30;
+        private static final int MAX_SIZE = 10000;
         private LinkedBlockingQueue<NettyEvent> eventQueue = new LinkedBlockingQueue<>();
 
         public void putNettyEvent(final NettyEvent event) {
             if (eventQueue.size() < MAX_SIZE) {
-                eventQueue.offer(event);
+                eventQueue.add(event);
             } else {
                 logger.warn("event queue size[{}] enough, so drop this event {}", this.eventQueue.size(),
                         event.toString());
@@ -76,5 +76,5 @@ public abstract class DefaultSrvAcceptor extends NettySrvAcceptor {
         }
     }
 
-    public abstract ChannelEventListener getChannelEventListener();
+    protected abstract ChannelEventListener getChannelEventListener();
 }

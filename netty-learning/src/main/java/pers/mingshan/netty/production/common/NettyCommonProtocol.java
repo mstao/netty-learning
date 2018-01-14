@@ -29,6 +29,11 @@ public class NettyCommonProtocol {
     /** response sign **/
     public static final byte RESPONSE = 2;
 
+    public static final byte SERVICE_1 = 3;
+    public static final byte SERVICE_2 = 4;
+    public static final byte SERVICE_3 = 5;
+    public static final byte SERVICE_4 = 6;
+
     /** Heatbeat sign **/
     public static final byte HEARTBEAT = 126;
     /** Acknowledge sign **/
@@ -36,6 +41,7 @@ public class NettyCommonProtocol {
 
     /** 消息标志位, 用来表示消息类型 **/
     private byte sign;
+    /**  **/
     private byte status;
     /** 消息 id **/
     private long id;
