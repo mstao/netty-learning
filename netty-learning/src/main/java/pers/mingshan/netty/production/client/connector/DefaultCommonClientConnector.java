@@ -154,6 +154,14 @@ public class DefaultCommonClientConnector extends NettyClientConnector {
                 messageNonAcks.remove(((Acknowledge)msg).getSequence());
             }
         }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            if (this == ctx.pipeline().last()) {
+                logger.info("服务器已经关闭");
+            }
+            ctx.close();
+        }
     }
 
     /**

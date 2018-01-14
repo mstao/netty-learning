@@ -252,6 +252,14 @@ public class DefaultCommonSrvAcceptor extends DefaultSrvAcceptor {
             // 收到了消息，需要向客户端发送回执
             channel.writeAndFlush(new Acknowledge(msg.getSequence())).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);;
         }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            if (this == ctx.pipeline().last()) {
+                logger.info("客户端已经离开");
+            }
+            ctx.close();
+        }
     }
 
     /**
