@@ -36,7 +36,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
   
     @Override  
     public void channelRead(ChannelHandlerContext ctx, Object msg) {  
-        System.out.println("HelloWorldClientHandler read Message:"+msg);  
+        System.out.println("HelloWorldClientHandler read Message:" + msg);  
     }
 
     @Override  
